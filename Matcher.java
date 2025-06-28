@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ProjectNameMatcher {
+public class Matcher {
 
     private static final double THRESHOLD = 0.88;   // adjust to be stricter/looser
     private static final JaroWinklerSimilarity JW = new JaroWinklerSimilarity();
@@ -15,7 +15,7 @@ public class ProjectNameMatcher {
     public static void main(String[] args) throws Exception {
 
         if (args.length < 3) {
-            System.err.println("Usage: java ProjectNameMatcher <fileA.csv> <fileB.csv> <output.csv>");
+            System.err.println("Usage: java Matcher <fileA.csv> <fileB.csv> <output.csv>");
             System.exit(1);
         }
 
@@ -39,7 +39,7 @@ public class ProjectNameMatcher {
             return r.readAll().stream()
                     .skip(1)                    // skip header row – comment out if none
                     .map(row -> row[0])         // first column only
-                    .map(ProjectNameMatcher::normalise)
+                    .map(Matcher::normalise)
                     .distinct()
                     .collect(Collectors.toList());
         }
