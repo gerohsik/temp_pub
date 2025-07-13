@@ -1,0 +1,60 @@
+name: Semgrep Scan (Community Edition)
+
+on:
+  push:
+    branches: [ main ]      # adjust as needed
+  pull_request:             # scans the PR diff
+  workflow_dispatch:        # allows manual runs from the Actions tab
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+
+    # Only needed if you plan to upload SARIF to Code Scanning.
+    permissions:
+      contents: read
+      security-events: write   # allow “upload-sarif” if you turn it on
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Semgrep CLI (community edition)
+        run: pip install --upgrade semgrep
+
+      # You have three options for the rule set:
+      #   1. Use a Semgrep Registry pack (e.g. p/ci, p/r2c-security-audit, etc.)
+      #   2. Point at a custom .semgrep.yml in your repo
+      #   3. Mix & match with multiple --config flags
+      #
+      # Replace `p/ci` below with whatever fits your needs.
+      - name: Run Semgrep scan
+        run: |
+          semgrep scan \
+            --config p/ci \
+            --json -o semgrep.json \
+            --sarif -o semgrep.sarif \
+            --error --metrics=off   # exit non-zero if findings
+
+      # Store the reports so you can download them from the
+      # “Artifacts” section of the workflow run.
+      - name: Upload Semgrep reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-reports
+          path: |
+            semgrep.json
+            semgrep.sarif
+
+      # Optional: send findings to GitHub Code Scanning
+      # (uncomment the step below if you have CodeQL / Advanced Security enabled)
+      #
+      # - name: Upload SARIF to Code Scanning
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: semgrep.sarif
